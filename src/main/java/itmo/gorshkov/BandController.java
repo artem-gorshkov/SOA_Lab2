@@ -58,9 +58,9 @@ public class BandController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown answer from server");
             }
         } catch (FeignException.NotFound e) {
-            return "Band not found";
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Band not found");
         } catch (FeignException.InternalServerError e) {
-            return "Main service unavailable";
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Main service unavailable");
         }
     }
 
