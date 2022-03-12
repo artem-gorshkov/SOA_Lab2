@@ -1,21 +1,32 @@
 package itmo.gorshkov;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import feign.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("v1/api/band")
 public class BandController {
+    private final static Logger log = LoggerFactory.getLogger(BandController.class);
 
     private final BandClient client;
+    private URI targetUrl;
 
     public BandController(BandClient client) {
+        initServices();
         this.client = client;
     }
 
@@ -35,7 +46,7 @@ public class BandController {
         }
 
         try {
-            MusicBand band = client.getBand(id);
+            MusicBand band = client.getBand(id, targetUrl);
             if (isAdd) {
                 band.setNumberOfParticipants(band.getNumberOfParticipants() + 1);
             } else {
@@ -45,7 +56,7 @@ public class BandController {
                 }
 
             }
-            Response response = client.putBand(band);
+            Response response = client.putBand(band, targetUrl);
             if (response.status() == 200) {
                 return band.getNumberOfParticipants().toString();
             }
@@ -61,6 +72,25 @@ public class BandController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Band not found");
         } catch (FeignException.InternalServerError e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Main service unavailable");
+        }
+    }
+
+    private boolean initServices() {
+        try {
+            String sdUrl = "http://localhost:8500";
+            String url = sdUrl + "/v1/agent/service/l1";
+
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<String> answer = restTemplate.getForEntity(url, String.class);
+            if (HttpStatus.OK.equals(answer.getStatusCode())) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(answer.getBody());
+                targetUrl = new URI("https://" + root.path("Address").textValue()+ ":" + root.path("Port").intValue() + "/v1/api/band");
+            }
+            return true;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return false;
         }
     }
 

@@ -6,11 +6,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 
+import java.net.URI;
+
 @FeignClient(value = "bandClient", url = "${service.host}", path = "/v1/api/band", configuration = FeignConfig.class)
 public interface BandClient {
     @GetMapping("/{id}")
-    MusicBand getBand(@PathVariable("id") Integer id);
+    MusicBand getBand(@PathVariable("id") Integer id, URI baseUrl);
 
     @PutMapping("")
-    Response putBand(MusicBand musicBand);
+    Response putBand(MusicBand musicBand, URI baseUrl);
 }
