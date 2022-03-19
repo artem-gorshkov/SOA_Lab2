@@ -56,7 +56,7 @@ public class BandController {
                 }
 
             }
-            Response response = client.putBand(band, targetUrl);
+            Response response = client.putBand("text/plain", band, targetUrl);
             if (response.status() == 200) {
                 return band.getNumberOfParticipants().toString();
             }
@@ -85,7 +85,7 @@ public class BandController {
             if (HttpStatus.OK.equals(answer.getStatusCode())) {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(answer.getBody());
-                targetUrl = new URI("https://" + root.path("Address").textValue()+ ":" + root.path("Port").intValue() + "/v1/api/band");
+                targetUrl = new URI("http://" + root.path("Address").textValue()+ ":" + root.path("Port").intValue() + "/api/band");
             }
             return true;
         } catch (Exception e) {
